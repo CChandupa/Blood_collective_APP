@@ -1,0 +1,14 @@
+export const BLOOD_TYPES = [
+  { id: 1, group: 'A+' },
+  { id: 2, group: 'A-' },
+  { id: 3, group: 'B+' },
+  { id: 4, group: 'B-' },
+  { id: 5, group: 'AB+' },
+  { id: 6, group: 'AB-' },
+  { id: 7, group: 'O+' },
+  { id: 8, group: 'O-' },
+];
+
+export const getBloodTypeGroup = (id: number) => {
+  return BLOOD_TYPES.find(bt => bt.id === id)?.group || 'Unknown';
+};
