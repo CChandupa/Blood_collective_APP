@@ -2,51 +2,53 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { ApiResponse } from '@/types';
 
+const FALLBACK_LOCATIONS = [
+  'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo',
+  'Galle', 'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara', 'Kandy',
+  'Kegalle', 'Kilinochchi', 'Kurunegala', 'Mannar', 'Matale', 'Matara',
+  'Moneragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 'Puttalam',
+  'Ratnapura', 'Trincomalee', 'Vavuniya'
+].map((district, index) => ({
+  location_id: index + 1,
+  city: district,
+  district: district,
+  postal_code: '00000'
+}));
+
+function getFallbackResponse() {
+  return NextResponse.json<ApiResponse>({ success: true, data: FALLBACK_LOCATIONS });
+}
+
+// Check if Supabase keys are actually configured
+function isSupabaseConfigured(): boolean {
+  const url = process.env.SUPABASE_URL || '';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  if (!url || !key || key.includes('YOUR_') || key.length < 20) {
+    return false;
+  }
+  return true;
+}
+
 export async function GET() {
+  // If Supabase isn't configured, return fallback immediately (no hanging!)
+  if (!isSupabaseConfigured()) {
+    return getFallbackResponse();
+  }
+
   try {
     const { data, error } = await supabaseAdmin
       .from('location')
       .select('*')
       .order('district', { ascending: true });
 
-    if (error) {
-      // Fallback to hardcoded list if database is not set up
-      return NextResponse.json<ApiResponse>({
-        success: true,
-        data: [
-          'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo',
-          'Galle', 'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara', 'Kandy',
-          'Kegalle', 'Kilinochchi', 'Kurunegala', 'Mannar', 'Matale', 'Matara',
-          'Moneragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 'Puttalam',
-          'Ratnapura', 'Trincomalee', 'Vavuniya'
-        ].map((district, index) => ({
-          location_id: index + 1,
-          city: district,
-          district: district,
-          postal_code: '00000'
-        }))
-      });
+    if (error || !data || data.length === 0) {
+      return getFallbackResponse();
     }
 
     return NextResponse.json<ApiResponse>({ success: true, data });
   } catch (err) {
     console.error('Locations GET error:', err);
-    // Fallback to hardcoded list on exception
-    return NextResponse.json<ApiResponse>({
-      success: true,
-      data: [
-          'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo',
-          'Galle', 'Gampaha', 'Hambantota', 'Jaffna', 'Kalutara', 'Kandy',
-          'Kegalle', 'Kilinochchi', 'Kurunegala', 'Mannar', 'Matale', 'Matara',
-          'Moneragala', 'Mullaitivu', 'Nuwara Eliya', 'Polonnaruwa', 'Puttalam',
-          'Ratnapura', 'Trincomalee', 'Vavuniya'
-      ].map((district, index) => ({
-        location_id: index + 1,
-        city: district,
-        district: district,
-        postal_code: '00000'
-      }))
-    });
+    return getFallbackResponse();
   }
 }
 

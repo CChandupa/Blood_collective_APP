@@ -4,12 +4,14 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../../components/Button';
 import { Colors, Fonts } from '../../constants/theme';
+import { useResponsive } from '../../hooks/useResponsive';
 import { api } from '../../services/api';
 import { Bell } from 'lucide-react-native';
 
 export default function DonorDashboard() {
   const router = useRouter();
   const { user, isLoading: isAuthLoading } = useAuth();
+  const { isMobile, responsive, fs } = useResponsive();
   
   const [donorDetails, setDonorDetails] = useState<any>(null);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -73,15 +75,38 @@ export default function DonorDashboard() {
   return (
     <ScrollView 
       style={styles.container} 
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        {
+          maxWidth: responsive(500, 700, 800),
+          padding: responsive(16, 20, 24),
+        }
+      ]}
       refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
     >
-      <Text style={styles.greeting}>Hello, {donorDetails.full_name}</Text>
+      <Text style={[styles.greeting, { fontSize: fs(responsive(22, 26, 28)) }]}>
+        Hello, {donorDetails.full_name}
+      </Text>
       
-      <View style={styles.profileCard}>
-        <View style={styles.profileHeader}>
-          <View style={styles.bloodTypeBadge}>
-            <Text style={styles.bloodTypeText}>{donorDetails.blood_type?.blood_group}</Text>
+      {/* Profile Card */}
+      <View style={[styles.profileCard, { padding: responsive(16, 20, 24) }]}>
+        <View style={[
+          styles.profileHeader,
+          { flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center' }
+        ]}>
+          <View style={[
+            styles.bloodTypeBadge,
+            {
+              width: responsive(48, 56, 64),
+              height: responsive(48, 56, 64),
+              borderRadius: responsive(24, 28, 32),
+              marginRight: isMobile ? 0 : 20,
+              marginBottom: isMobile ? 12 : 0,
+            }
+          ]}>
+            <Text style={[styles.bloodTypeText, { fontSize: fs(responsive(18, 20, 24)) }]}>
+              {donorDetails.blood_type?.blood_group}
+            </Text>
           </View>
           <View style={styles.statusContainer}>
             <Text style={styles.statusLabel}>Current Status:</Text>
@@ -99,14 +124,19 @@ export default function DonorDashboard() {
         />
       </View>
 
+      {/* Notifications */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Notifications</Text>
+        <Text style={[styles.sectionTitle, { fontSize: fs(responsive(17, 19, 20)) }]}>Notifications</Text>
         {notifications.length === 0 ? (
           <Text style={styles.emptyText}>You have no new notifications.</Text>
         ) : (
           notifications.map(notif => (
-            <View key={notif.notification_id} style={[styles.notificationCard, !notif.read_status && styles.unreadNotification]}>
-              <View style={styles.notifIcon}>
+            <View key={notif.notification_id} style={[
+              styles.notificationCard, 
+              !notif.read_status && styles.unreadNotification,
+              { padding: responsive(12, 14, 16), flexDirection: isMobile ? 'column' : 'row' }
+            ]}>
+              <View style={[styles.notifIcon, { marginRight: isMobile ? 0 : 16, marginBottom: isMobile ? 8 : 0 }]}>
                 <Bell color={Colors.primary} size={20} />
               </View>
               <View style={styles.notifContent}>
@@ -127,21 +157,27 @@ export default function DonorDashboard() {
         )}
       </View>
 
+      {/* Scheduled Donations */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Your Upcoming Donations</Text>
+        <Text style={[styles.sectionTitle, { fontSize: fs(responsive(17, 19, 20)) }]}>Your Upcoming Donations</Text>
         {schedules.length === 0 ? (
           <Text style={styles.emptyText}>You have no scheduled donations.</Text>
         ) : (
           schedules.map(sched => (
-            <View key={sched.schedule_id} style={styles.scheduleCard}>
-              <View style={styles.scheduleHeader}>
+            <View key={sched.schedule_id} style={[styles.scheduleCard, { padding: responsive(14, 18, 20) }]}>
+              <View style={[
+                styles.scheduleHeader,
+                { flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center' }
+              ]}>
                 <Text style={styles.scheduleHospital}>{sched.patient_request?.hospital?.hospital_name}</Text>
-                <View style={[styles.statusPill, { backgroundColor: Colors.warning + '20' }]}>
+                <View style={[styles.statusPill, { backgroundColor: Colors.warning + '20', marginTop: isMobile ? 8 : 0 }]}>
                    <Text style={{ color: Colors.warning, fontWeight: 'bold' }}>{sched.donation_status}</Text>
                 </View>
               </View>
               <Text style={styles.scheduleDate}>Date: {sched.donation_date}</Text>
-              <Text style={styles.schedulePatient}>Patient: {sched.patient_request?.patient_name} (Needs {sched.patient_request?.blood_type?.blood_group})</Text>
+              <Text style={styles.schedulePatient}>
+                Patient: {sched.patient_request?.patient_name} (Needs {sched.patient_request?.blood_type?.blood_group})
+              </Text>
             </View>
           ))
         )}
@@ -156,42 +192,31 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   content: {
-    padding: 24,
-    maxWidth: 800,
     width: '100%',
     alignSelf: 'center',
   },
   greeting: {
-    fontSize: 28,
     fontFamily: Fonts.bold,
     color: Colors.text,
     marginBottom: 24,
   },
   profileCard: {
     backgroundColor: Colors.surfaceElevated,
-    padding: 24,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: 32,
   },
   profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 24,
   },
   bloodTypeBadge: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 20,
   },
   bloodTypeText: {
     color: '#FFF',
-    fontSize: 24,
     fontFamily: Fonts.bold,
   },
   statusContainer: {
@@ -216,7 +241,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   sectionTitle: {
-    fontSize: 20,
     fontFamily: Fonts.bold,
     color: Colors.text,
     marginBottom: 16,
@@ -227,9 +251,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.regular,
   },
   notificationCard: {
-    flexDirection: 'row',
     backgroundColor: Colors.surface,
-    padding: 16,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -239,9 +261,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceElevated,
     borderColor: Colors.primary,
   },
-  notifIcon: {
-    marginRight: 16,
-  },
+  notifIcon: {},
   notifContent: {
     flex: 1,
   },
@@ -257,16 +277,13 @@ const styles = StyleSheet.create({
   },
   scheduleCard: {
     backgroundColor: Colors.surface,
-    padding: 20,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: 12,
   },
   scheduleHeader: {
-    flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     marginBottom: 12,
   },
   scheduleHospital: {

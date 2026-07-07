@@ -31,8 +31,14 @@ export function RequestCard({ request, onPress }: RequestCardProps) {
   const urgencyColor = getUrgencyColor();
   const statusColor = getStatusColor();
 
+  const CardComponent = onPress ? TouchableOpacity : View;
+
   return (
-    <View style={styles.card}>
+    <CardComponent 
+      style={[styles.card, onPress && styles.cardPressable]} 
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.header}>
         <View style={styles.bloodTypeBadge}>
           <Text style={styles.bloodTypeText}>{request.blood_type?.blood_group}</Text>
@@ -84,6 +90,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: 16,
+  },
+  cardPressable: {
+    borderColor: Colors.primary + '50',
   },
   header: {
     flexDirection: 'row',

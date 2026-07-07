@@ -1,98 +1,143 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Button } from '../components/Button';
 import { Colors, Fonts } from '../constants/theme';
+import { useResponsive } from '../hooks/useResponsive';
 import { Heart, Users, Activity, Search } from 'lucide-react-native';
-
-const { width } = Dimensions.get('window');
 
 export default function LandingPage() {
   const router = useRouter();
+  const { isMobile, isTablet, isDesktop, responsive, fs, wp } = useResponsive();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.heroSection}>
-        <View style={styles.heroTextContainer}>
-          <Text style={styles.title}>Save a Life Today.</Text>
-          <Text style={styles.subtitle}>
+      {/* Hero Section */}
+      <View style={[
+        styles.heroSection, 
+        { 
+          flexDirection: isDesktop ? 'row' : 'column',
+          padding: responsive(20, 32, 48),
+          minHeight: responsive(400, 450, 500),
+        }
+      ]}>
+        <View style={[
+          styles.heroTextContainer, 
+          {
+            paddingRight: isDesktop ? 40 : 0,
+            marginBottom: isDesktop ? 0 : 32,
+            alignItems: isDesktop ? 'flex-start' : 'center',
+          }
+        ]}>
+          <Text style={[
+            styles.title, 
+            { 
+              fontSize: fs(responsive(32, 48, 64)),
+              textAlign: isDesktop ? 'left' : 'center',
+            }
+          ]}>
+            Save a Life Today.
+          </Text>
+          <Text style={[
+            styles.subtitle,
+            {
+              fontSize: fs(responsive(14, 16, 18)),
+              textAlign: isDesktop ? 'left' : 'center',
+            }
+          ]}>
             Join Sri Lanka's largest blood donation network. Connect with donors in your area and help those in critical need.
           </Text>
           
-          <View style={styles.actionButtons}>
+          <View style={[
+            styles.actionButtons,
+            { justifyContent: isDesktop ? 'flex-start' : 'center' }
+          ]}>
             <Button 
               title="I Need Blood" 
               onPress={() => router.push('/request')} 
               variant="primary"
-              size="large"
-              style={styles.actionButton}
+              size={isMobile ? 'medium' : 'large'}
+              style={[styles.actionButton, { minWidth: responsive(130, 150, 160) }]}
             />
             <Button 
               title="Register as Donor" 
               onPress={() => router.push('/auth/register')} 
               variant="outline"
-              size="large"
-              style={styles.actionButton}
+              size={isMobile ? 'medium' : 'large'}
+              style={[styles.actionButton, { minWidth: responsive(130, 150, 160) }]}
             />
           </View>
         </View>
 
-        {/* We can use an animated blood drop or a beautiful illustration here */}
         <View style={styles.heroImageContainer}>
-          <View style={styles.bloodDropShape}>
-             <Heart color="#FFF" size={80} fill={Colors.primary} strokeWidth={1} />
+          <View style={[
+            styles.bloodDropShape,
+            {
+              width: responsive(150, 200, 250),
+              height: responsive(150, 200, 250),
+              borderRadius: responsive(75, 100, 125),
+            }
+          ]}>
+            <Heart color="#FFF" size={responsive(48, 64, 80)} fill={Colors.primary} strokeWidth={1} />
           </View>
         </View>
       </View>
 
-      <View style={styles.statsSection}>
-        <View style={styles.statCard}>
-          <Users color={Colors.primary} size={32} />
-          <Text style={styles.statNumber}>10,000+</Text>
-          <Text style={styles.statLabel}>Registered Donors</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Activity color={Colors.primary} size={32} />
-          <Text style={styles.statNumber}>25</Text>
-          <Text style={styles.statLabel}>Districts Covered</Text>
-        </View>
-        <View style={styles.statCard}>
-          <Heart color={Colors.primary} size={32} />
-          <Text style={styles.statNumber}>5,000+</Text>
-          <Text style={styles.statLabel}>Lives Saved</Text>
-        </View>
+      {/* Stats Section */}
+      <View style={[
+        styles.statsSection,
+        { padding: responsive(20, 32, 40) }
+      ]}>
+        {[
+          { icon: <Users color={Colors.primary} size={responsive(24, 28, 32)} />, num: '10,000+', label: 'Registered Donors' },
+          { icon: <Activity color={Colors.primary} size={responsive(24, 28, 32)} />, num: '25', label: 'Districts Covered' },
+          { icon: <Heart color={Colors.primary} size={responsive(24, 28, 32)} />, num: '5,000+', label: 'Lives Saved' },
+        ].map((stat, idx) => (
+          <View key={idx} style={[
+            styles.statCard,
+            {
+              width: responsive(140, 180, 200),
+              padding: responsive(16, 20, 24),
+            }
+          ]}>
+            {stat.icon}
+            <Text style={[styles.statNumber, { fontSize: fs(responsive(22, 28, 32)) }]}>{stat.num}</Text>
+            <Text style={[styles.statLabel, { fontSize: fs(responsive(11, 13, 14)) }]}>{stat.label}</Text>
+          </View>
+        ))}
       </View>
 
-      <View style={styles.howItWorksSection}>
-        <Text style={styles.sectionTitle}>How It Works</Text>
+      {/* How It Works */}
+      <View style={[
+        styles.howItWorksSection,
+        { padding: responsive(20, 32, 40) }
+      ]}>
+        <Text style={[styles.sectionTitle, { fontSize: fs(responsive(24, 28, 32)) }]}>How It Works</Text>
         
-        <View style={styles.stepsContainer}>
-          <View style={styles.step}>
-            <View style={styles.stepIcon}>
-              <Search color={Colors.primary} size={24} />
+        <View style={[
+          styles.stepsContainer,
+          { 
+            flexDirection: isMobile ? 'column' : 'row',
+            gap: responsive(20, 30, 40),
+          }
+        ]}>
+          {[
+            { icon: <Search color={Colors.primary} size={24} />, title: '1. Request', desc: 'Submit a request for the required blood type in your district.' },
+            { icon: <Activity color={Colors.primary} size={24} />, title: '2. Match', desc: 'Our system instantly notifies nearby registered donors with matching blood types.' },
+            { icon: <Heart color={Colors.primary} size={24} />, title: '3. Connect', desc: 'Donors accept the request and head to the hospital to save a life.' },
+          ].map((step, idx) => (
+            <View key={idx} style={[
+              styles.step,
+              { padding: responsive(20, 24, 32) }
+            ]}>
+              <View style={styles.stepIcon}>{step.icon}</View>
+              <Text style={[styles.stepTitle, { fontSize: fs(responsive(16, 18, 20)) }]}>{step.title}</Text>
+              <Text style={[styles.stepDesc, { fontSize: fs(responsive(12, 13, 14)) }]}>{step.desc}</Text>
             </View>
-            <Text style={styles.stepTitle}>1. Request</Text>
-            <Text style={styles.stepDesc}>Submit a request for the required blood type in your district.</Text>
-          </View>
-          
-          <View style={styles.step}>
-            <View style={styles.stepIcon}>
-              <Activity color={Colors.primary} size={24} />
-            </View>
-            <Text style={styles.stepTitle}>2. Match</Text>
-            <Text style={styles.stepDesc}>Our system instantly notifies nearby registered donors with matching blood types.</Text>
-          </View>
-          
-          <View style={styles.step}>
-            <View style={styles.stepIcon}>
-              <Heart color={Colors.primary} size={24} />
-            </View>
-            <Text style={styles.stepTitle}>3. Connect</Text>
-            <Text style={styles.stepDesc}>Donors accept the request and head to the hospital to save a life.</Text>
-          </View>
+          ))}
         </View>
         
-        <View style={{ marginTop: 40, alignItems: 'center' }}>
+        <View style={{ marginTop: responsive(24, 32, 40), alignItems: 'center' }}>
           <Button 
             title="Search Donors Directory" 
             onPress={() => router.push('/search')} 
@@ -113,85 +158,61 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   heroSection: {
-    flexDirection: width > 768 ? 'row' : 'column',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 40,
-    minHeight: 500,
     backgroundColor: Colors.surface,
   },
   heroTextContainer: {
     flex: 1,
-    paddingRight: width > 768 ? 40 : 0,
-    marginBottom: width > 768 ? 0 : 40,
-    alignItems: width > 768 ? 'flex-start' : 'center',
   },
   title: {
-    fontSize: width > 768 ? 64 : 48,
     fontFamily: Fonts.bold,
     fontWeight: '800',
     color: Colors.text,
     marginBottom: 16,
-    textAlign: width > 768 ? 'left' : 'center',
   },
   subtitle: {
-    fontSize: 18,
     fontFamily: Fonts.regular,
     color: Colors.textSecondary,
     marginBottom: 32,
     lineHeight: 28,
-    textAlign: width > 768 ? 'left' : 'center',
   },
   actionButtons: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
     flexWrap: 'wrap',
-    justifyContent: width > 768 ? 'flex-start' : 'center',
   },
-  actionButton: {
-    minWidth: 160,
-  },
+  actionButton: {},
   heroImageContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
   bloodDropShape: {
-    width: 250,
-    height: 250,
     backgroundColor: Colors.primaryDark + '80',
-    borderRadius: 125,
-    borderBottomLeftRadius: 20, // To make it look a bit like a drop
+    borderBottomLeftRadius: 20,
     transform: [{ rotate: '-45deg' }],
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
     elevation: 10,
   },
   statsSection: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 24,
-    padding: 40,
+    gap: 16,
     backgroundColor: Colors.background,
     borderBottomWidth: 1,
     borderBottomColor: Colors.surface,
   },
   statCard: {
     backgroundColor: Colors.surfaceElevated,
-    padding: 24,
     borderRadius: 16,
     alignItems: 'center',
-    width: 200,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   statNumber: {
-    fontSize: 32,
     fontFamily: Fonts.bold,
     fontWeight: '700',
     color: Colors.text,
@@ -199,25 +220,20 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   statLabel: {
-    fontSize: 14,
     fontFamily: Fonts.regular,
     color: Colors.textSecondary,
   },
   howItWorksSection: {
-    padding: 40,
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 32,
     fontFamily: Fonts.bold,
     fontWeight: '700',
     color: Colors.text,
-    marginBottom: 40,
+    marginBottom: 32,
   },
   stepsContainer: {
-    flexDirection: width > 768 ? 'row' : 'column',
     justifyContent: 'center',
-    gap: 40,
     width: '100%',
     maxWidth: 1200,
   },
@@ -225,7 +241,6 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     backgroundColor: Colors.surface,
-    padding: 32,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -240,14 +255,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   stepTitle: {
-    fontSize: 20,
     fontFamily: Fonts.bold,
     fontWeight: '700',
     color: Colors.text,
     marginBottom: 12,
   },
   stepDesc: {
-    fontSize: 14,
     fontFamily: Fonts.regular,
     color: Colors.textSecondary,
     textAlign: 'center',

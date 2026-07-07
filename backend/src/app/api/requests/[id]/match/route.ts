@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { ApiResponse } from '@/types';
 
-// Match donors for a blood request — finds available donors with matching blood type
-export async function POST(
+// Fetch matching donors for a blood request (without modifying state)
+export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -25,40 +25,24 @@ export async function POST(
       );
     }
 
-    // Find matching available donors
+    // Find matching available donors (who are NOT blocked)
     const { data: matchingDonors, error: donorError } = await supabaseAdmin
       .from('donor')
       .select(`
-        donor_id, full_name, mobile_no, email, availability_status,
+        donor_id, full_name, mobile_no, email, availability_status, is_blocked,
         blood_type:blood_type_id(blood_group),
         location:location_id(city, district)
       `)
       .eq('blood_type_id', bloodRequest.blood_type_id)
-      .eq('availability_status', true);
+      .eq('availability_status', true)
+      .or('is_blocked.is.null,is_blocked.eq.false');
 
     if (donorError) {
+      console.error(donorError);
       return NextResponse.json<ApiResponse>(
         { success: false, error: 'Failed to find matching donors' },
         { status: 500 }
       );
-    }
-
-    // Send notifications to matched donors
-    if (matchingDonors && matchingDonors.length > 0) {
-      const bloodGroup = (bloodRequest.blood_type as { blood_group: string })?.blood_group || 'Unknown';
-      const notifications = matchingDonors.map((donor) => ({
-        donor_id: donor.donor_id,
-        message: `Urgent: A patient needs ${bloodGroup} blood! Request #${requestId}. Please check your dashboard for details.`,
-        read_status: false,
-      }));
-
-      await supabaseAdmin.from('notification').insert(notifications);
-
-      // Update request status to Matched
-      await supabaseAdmin
-        .from('patient_request')
-        .update({ status: 'Matched' })
-        .eq('request_id', requestId);
     }
 
     return NextResponse.json<ApiResponse>({
@@ -67,10 +51,10 @@ export async function POST(
         matched_count: matchingDonors?.length || 0,
         donors: matchingDonors,
       },
-      message: `Found ${matchingDonors?.length || 0} matching donors and sent notifications`,
+      message: `Found ${matchingDonors?.length || 0} matching donors`,
     });
   } catch (err) {
-    console.error('Match donors error:', err);
+    console.error('Match GET error:', err);
     return NextResponse.json<ApiResponse>(
       { success: false, error: 'Internal server error' },
       { status: 500 }

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { BloodTypeCard } from '../components/BloodTypeCard';
 import { DonorCard } from '../components/DonorCard';
 import { Colors, Fonts } from '../constants/theme';
 import { BLOOD_TYPES } from '../constants/bloodTypes';
 import { DISTRICTS } from '../constants/districts';
+import { useResponsive } from '../hooks/useResponsive';
 import { api } from '../services/api';
 import { Donor } from '../types';
-import { Platform } from 'react-native';
 
 export default function SearchDonors() {
   const router = useRouter();
+  const { isMobile, responsive, fs } = useResponsive();
   
   const [donors, setDonors] = useState<Donor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,13 +43,21 @@ export default function SearchDonors() {
   }, [selectedBloodType, selectedDistrict]);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={styles.container} contentContainerStyle={[
+      styles.content,
+      {
+        maxWidth: responsive(500, 700, 800),
+        padding: responsive(12, 16, 20),
+      }
+    ]}>
       <View style={styles.header}>
-        <Text style={styles.title}>Find Blood Donors</Text>
-        <Text style={styles.subtitle}>Connect with available donors in your area</Text>
+        <Text style={[styles.title, { fontSize: fs(responsive(24, 28, 32)) }]}>Find Blood Donors</Text>
+        <Text style={[styles.subtitle, { fontSize: fs(responsive(13, 15, 16)) }]}>
+          Connect with available donors in your area
+        </Text>
       </View>
       
-      <View style={styles.filtersSection}>
+      <View style={[styles.filtersSection, { padding: responsive(16, 20, 24) }]}>
         <Text style={styles.sectionLabel}>Filter by Blood Type</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.bloodTypeScroll}>
           <BloodTypeCard 
@@ -76,9 +85,9 @@ export default function SearchDonors() {
               value={selectedDistrict}
               onChange={(e) => setSelectedDistrict(e.target.value)}
             >
-              <option value="">All Districts</option>
+              <option value="" style={{ backgroundColor: Colors.surfaceElevated, color: Colors.text }}>All Districts</option>
               {DISTRICTS.map(dist => (
-                <option key={dist} value={dist}>{dist}</option>
+                <option key={dist} value={dist} style={{ backgroundColor: Colors.surfaceElevated, color: Colors.text }}>{dist}</option>
               ))}
             </select>
           ) : (
@@ -88,7 +97,7 @@ export default function SearchDonors() {
       </View>
 
       <View style={styles.resultsSection}>
-        <Text style={styles.resultsHeader}>
+        <Text style={[styles.resultsHeader, { fontSize: fs(responsive(15, 17, 18)) }]}>
           {isLoading ? 'Searching...' : `Found ${donors.length} Available Donors`}
         </Text>
         
@@ -116,33 +125,28 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   content: {
-    padding: 20,
-    maxWidth: 800,
     width: '100%',
     alignSelf: 'center',
   },
   header: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   title: {
-    fontSize: 32,
     fontFamily: Fonts.bold,
     fontWeight: '700',
     color: Colors.text,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
     color: Colors.textSecondary,
     fontFamily: Fonts.regular,
   },
   filtersSection: {
     backgroundColor: Colors.surface,
-    padding: 24,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
-    marginBottom: 32,
+    marginBottom: 24,
   },
   sectionLabel: {
     color: Colors.text,
@@ -152,7 +156,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   bloodTypeScroll: {
-    gap: 12,
+    gap: 10,
     paddingBottom: 8,
   },
   pickerContainer: {
@@ -170,21 +174,19 @@ const styles = StyleSheet.create({
     color: Colors.text,
     padding: 12,
     fontSize: 16,
-    border: 'none',
-    outline: 'none',
+    borderWidth: 0,
   },
   resultsSection: {
     flex: 1,
   },
   resultsHeader: {
-    fontSize: 18,
     fontFamily: Fonts.bold,
     fontWeight: '600',
     color: Colors.text,
     marginBottom: 16,
   },
   donorsList: {
-    gap: 16,
+    gap: 12,
   },
   emptyState: {
     padding: 40,

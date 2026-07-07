@@ -5,11 +5,13 @@ import { Input } from '../../components/Input';
 import { Button } from '../../components/Button';
 import { Colors, Fonts } from '../../constants/theme';
 import { useAuth } from '../../hooks/useAuth';
+import { useResponsive } from '../../hooks/useResponsive';
 import { api } from '../../services/api';
 
 export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
+  const { isMobile, responsive, fs } = useResponsive();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,10 +37,21 @@ export default function Login() {
       });
 
       if (response.data.success) {
-        await login(response.data.data.token, response.data.data.user);
+        const rawUser = response.data.data.user;
         if (role === 'admin') {
+          await login(response.data.data.token, {
+            id: rawUser.admin_id,
+            email: rawUser.email,
+            role: 'admin'
+          });
           router.replace('/dashboard/admin');
         } else {
+          await login(response.data.data.token, {
+            id: rawUser.donor_id,
+            email: rawUser.email,
+            name: rawUser.full_name,
+            role: 'donor'
+          });
           router.replace('/dashboard/donor');
         }
       }
@@ -55,9 +68,15 @@ export default function Login() {
       style={styles.container}
     >
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Welcome Back</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+        <View style={[
+          styles.card,
+          {
+            maxWidth: responsive(360, 400, 420),
+            padding: responsive(20, 28, 32),
+          }
+        ]}>
+          <Text style={[styles.title, { fontSize: fs(responsive(22, 26, 28)) }]}>Welcome Back</Text>
+          <Text style={[styles.subtitle, { fontSize: fs(responsive(14, 15, 16)) }]}>Sign in to your account</Text>
           
           <View style={styles.roleToggle}>
             <TouchableOpacity 
@@ -121,24 +140,17 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
   },
   card: {
     width: '100%',
-    maxWidth: 400,
     backgroundColor: Colors.surface,
-    padding: 32,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
     elevation: 5,
   },
   title: {
-    fontSize: 28,
     fontFamily: Fonts.bold,
     fontWeight: '700',
     color: Colors.text,
@@ -146,7 +158,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
     fontFamily: Fonts.regular,
     color: Colors.textSecondary,
     marginBottom: 32,
@@ -190,6 +201,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 24,
+    flexWrap: 'wrap',
   },
   footerText: {
     color: Colors.textSecondary,

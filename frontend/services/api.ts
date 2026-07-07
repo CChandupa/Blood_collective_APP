@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // In development, Next.js API typically runs on port 3000
 // Use your machine's local IP address for physical device or emulator testing
-const API_URL = 'http://10.33.119.53:3000/api';
+const API_URL = 'http://10.33.65.193:3000/api';
 
 export const api = axios.create({
   baseURL: API_URL,

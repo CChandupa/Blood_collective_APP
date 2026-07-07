@@ -4,12 +4,15 @@ import { useRouter } from 'expo-router';
 import { Input } from '../components/Input';
 import { Button } from '../components/Button';
 import { BloodTypeCard } from '../components/BloodTypeCard';
+import { SearchableSelect } from '../components/SearchableSelect';
 import { Colors, Fonts } from '../constants/theme';
 import { BLOOD_TYPES } from '../constants/bloodTypes';
+import { useResponsive } from '../hooks/useResponsive';
 import { api } from '../services/api';
 
 export default function RequestBlood() {
   const router = useRouter();
+  const { isMobile, responsive, fs } = useResponsive();
   
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -62,11 +65,7 @@ export default function RequestBlood() {
       });
 
       if (response.data.success) {
-        const requestId = response.data.data.request_id;
-        
-        // 2. Automatically trigger matching algorithm
-        await api.post(`/requests/${requestId}/match`);
-        
+        // Request created successfully and is now Pending. Admin will review and match.
         setSuccess(true);
       }
     } catch (err: any) {
@@ -79,10 +78,18 @@ export default function RequestBlood() {
   if (success) {
     return (
       <View style={styles.successContainer}>
-        <View style={styles.successCard}>
-          <Text style={styles.successTitle}>Request Submitted Successfully!</Text>
-          <Text style={styles.successDesc}>
-            Your blood request has been created and our system is currently matching it with nearby donors. We will notify them immediately.
+        <View style={[
+          styles.successCard,
+          {
+            maxWidth: responsive(360, 450, 500),
+            padding: responsive(24, 32, 40),
+          }
+        ]}>
+          <Text style={[styles.successTitle, { fontSize: fs(responsive(20, 22, 24)) }]}>
+            Request Submitted Successfully!
+          </Text>
+          <Text style={[styles.successDesc, { fontSize: fs(responsive(14, 15, 16)) }]}>
+            Your blood request has been created and is currently Pending. An administrator will review your request shortly and refer you to the nearest matching donor.
           </Text>
           <Button 
             title="Return to Home" 
@@ -96,9 +103,17 @@ export default function RequestBlood() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Request Blood</Text>
-        <Text style={styles.subtitle}>Submit an emergency blood request. Our system will notify matched donors instantly.</Text>
+      <View style={[
+        styles.card,
+        {
+          maxWidth: responsive(360, 520, 600),
+          padding: responsive(20, 28, 32),
+        }
+      ]}>
+        <Text style={[styles.title, { fontSize: fs(responsive(24, 28, 32)) }]}>Request Blood</Text>
+        <Text style={[styles.subtitle, { fontSize: fs(responsive(13, 15, 16)) }]}>
+          Submit an emergency blood request. Our system will notify matched donors instantly.
+        </Text>
         
         {error ? <Text style={styles.errorMsg}>{error}</Text> : null}
 
@@ -126,24 +141,13 @@ export default function RequestBlood() {
         {fetchingHospitals ? (
           <ActivityIndicator color={Colors.primary} />
         ) : (
-          <View style={styles.pickerContainer}>
-            {Platform.OS === 'web' ? (
-              <select 
-                style={styles.webSelect as any}
-                value={formData.hospital_id}
-                onChange={(e) => setFormData({...formData, hospital_id: parseInt(e.target.value)})}
-              >
-                <option value={0} disabled>Select Hospital</option>
-                {hospitals.map(h => (
-                  <option key={h.hospital_id} value={h.hospital_id}>
-                    {h.hospital_name}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <Text style={{ color: Colors.text, padding: 12 }}>Use native picker</Text>
-            )}
-          </View>
+          <SearchableSelect
+            data={hospitals.map(h => ({ id: h.hospital_id, label: h.hospital_name }))}
+            value={formData.hospital_id}
+            onSelect={(id) => setFormData({...formData, hospital_id: id as number})}
+            placeholder="Select a Hospital"
+            searchPlaceholder="Search hospital name..."
+          />
         )}
 
         <Text style={[styles.sectionLabel, { marginTop: 24 }]}>Urgency Level *</Text>
@@ -154,9 +158,9 @@ export default function RequestBlood() {
               value={formData.urgency_level}
               onChange={(e) => setFormData({...formData, urgency_level: e.target.value})}
             >
-              <option value="Critical">Critical (Within 24 hours)</option>
-              <option value="High">High (Within 48 hours)</option>
-              <option value="Medium">Medium (Within a week)</option>
+              <option value="Critical" style={{ backgroundColor: Colors.surfaceElevated, color: Colors.text }}>Critical (Within 24 hours)</option>
+              <option value="High" style={{ backgroundColor: Colors.surfaceElevated, color: Colors.text }}>High (Within 48 hours)</option>
+              <option value="Medium" style={{ backgroundColor: Colors.surfaceElevated, color: Colors.text }}>Medium (Within a week)</option>
             </select>
           ) : (
             <Text style={{ color: Colors.text, padding: 12 }}>Use native picker</Text>
@@ -178,7 +182,7 @@ export default function RequestBlood() {
           isLoading={isLoading}
           style={{ marginTop: 32 }}
           variant="danger"
-          size="large"
+          size={isMobile ? 'medium' : 'large'}
         />
       </View>
     </ScrollView>
@@ -193,28 +197,24 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 40,
+    padding: 16,
+    paddingTop: 32,
     paddingBottom: 60,
   },
   card: {
     width: '100%',
-    maxWidth: 600,
     backgroundColor: Colors.surface,
-    padding: 32,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   title: {
-    fontSize: 32,
     fontFamily: Fonts.bold,
     fontWeight: '700',
     color: Colors.text,
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
     fontFamily: Fonts.regular,
     color: Colors.textSecondary,
     marginBottom: 32,
@@ -229,7 +229,8 @@ const styles = StyleSheet.create({
   bloodTypeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
+    gap: 10,
+    justifyContent: 'center',
   },
   pickerContainer: {
     backgroundColor: Colors.surfaceElevated,
@@ -246,8 +247,7 @@ const styles = StyleSheet.create({
     color: Colors.text,
     padding: 12,
     fontSize: 16,
-    border: 'none',
-    outline: 'none',
+    borderWidth: 0,
   },
   errorMsg: {
     color: Colors.danger,
@@ -263,27 +263,23 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: 16,
   },
   successCard: {
     width: '100%',
-    maxWidth: 500,
     backgroundColor: Colors.surfaceElevated,
-    padding: 40,
     borderRadius: 16,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: Colors.success,
   },
   successTitle: {
-    fontSize: 24,
     fontFamily: Fonts.bold,
     color: Colors.success,
     marginBottom: 16,
     textAlign: 'center',
   },
   successDesc: {
-    fontSize: 16,
     color: Colors.text,
     textAlign: 'center',
     lineHeight: 24,

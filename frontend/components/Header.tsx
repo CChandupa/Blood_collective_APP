@@ -1,13 +1,15 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors, Fonts } from '../constants/theme';
 import { useAuth } from '../hooks/useAuth';
+import { useResponsive } from '../hooks/useResponsive';
 import { LogOut, User as UserIcon, Droplet } from 'lucide-react-native';
 
 export function Header() {
   const router = useRouter();
   const { user, logout } = useAuth();
+  const { isMobile, fs, responsive } = useResponsive();
 
   const handleLogout = async () => {
     await logout();
@@ -23,33 +25,44 @@ export function Header() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[
+      styles.container, 
+      { 
+        paddingHorizontal: responsive(12, 20, 32),
+        paddingVertical: responsive(10, 14, 16),
+      }
+    ]}>
       <TouchableOpacity 
         style={styles.logoContainer} 
         onPress={() => router.push('/')}
       >
         <View style={styles.iconContainer}>
-          <Droplet color={Colors.primary} size={24} fill={Colors.primary} />
+          <Droplet color={Colors.primary} size={responsive(18, 22, 24)} fill={Colors.primary} />
         </View>
-        <Text style={styles.logoText}>Blood Collective</Text>
+        <Text style={[styles.logoText, { fontSize: fs(isMobile ? 16 : 20) }]}>
+          Blood Collective
+        </Text>
       </TouchableOpacity>
 
       <View style={styles.actions}>
         {user ? (
           <>
-            <TouchableOpacity style={styles.iconButton} onPress={goToDashboard}>
-              <UserIcon color={Colors.text} size={20} />
+            <TouchableOpacity style={[styles.iconButton, { padding: responsive(6, 8, 8) }]} onPress={goToDashboard}>
+              <UserIcon color={Colors.text} size={responsive(16, 18, 20)} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton} onPress={handleLogout}>
-              <LogOut color={Colors.danger} size={20} />
+            <TouchableOpacity style={[styles.iconButton, { padding: responsive(6, 8, 8) }]} onPress={handleLogout}>
+              <LogOut color={Colors.danger} size={responsive(16, 18, 20)} />
             </TouchableOpacity>
           </>
         ) : (
           <TouchableOpacity 
-            style={styles.loginButton} 
+            style={[styles.loginButton, {
+              paddingHorizontal: responsive(12, 16, 16),
+              paddingVertical: responsive(6, 8, 8),
+            }]} 
             onPress={() => router.push('/auth/login')}
           >
-            <Text style={styles.loginText}>Login</Text>
+            <Text style={[styles.loginText, { fontSize: fs(isMobile ? 13 : 14) }]}>Login</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -62,8 +75,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
     backgroundColor: Colors.background,
     borderBottomWidth: 1,
     borderBottomColor: Colors.surface,
@@ -77,23 +88,19 @@ const styles = StyleSheet.create({
   },
   logoText: {
     color: Colors.text,
-    fontSize: 20,
     fontFamily: Fonts.bold,
     fontWeight: '700',
   },
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    gap: 12,
   },
   iconButton: {
-    padding: 8,
     backgroundColor: Colors.surfaceElevated,
     borderRadius: 8,
   },
   loginButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
     backgroundColor: Colors.primary,
     borderRadius: 8,
   },

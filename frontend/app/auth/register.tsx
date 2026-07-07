@@ -7,13 +7,13 @@ import { BloodTypeCard } from '../../components/BloodTypeCard';
 import { Colors, Fonts } from '../../constants/theme';
 import { BLOOD_TYPES } from '../../constants/bloodTypes';
 import { useAuth } from '../../hooks/useAuth';
+import { useResponsive } from '../../hooks/useResponsive';
 import { api } from '../../services/api';
-import { Picker } from '@react-native-picker/picker'; // You might need to install this if you want native picker, but for web we can build a simple custom one or use a standard html select for simplicity in this demo.
-// For the sake of simplicity, we'll build a simple custom dropdown
 
 export default function Register() {
   const router = useRouter();
   const { login } = useAuth();
+  const { isMobile, responsive, fs } = useResponsive();
   
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -114,7 +114,13 @@ export default function Register() {
       });
 
       if (response.data.success) {
-        await login(response.data.data.token, response.data.data.user);
+        const rawUser = response.data.data.user;
+        await login(response.data.data.token, {
+          id: rawUser.donor_id,
+          email: rawUser.email,
+          name: rawUser.full_name,
+          role: 'donor'
+        });
         router.replace('/dashboard/donor');
       }
     } catch (err: any) {
@@ -127,9 +133,15 @@ export default function Register() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-      <View style={styles.card}>
-        <Text style={styles.title}>Become a Donor</Text>
-        <Text style={styles.subtitle}>Step {step} of 3</Text>
+      <View style={[
+        styles.card,
+        {
+          maxWidth: responsive(360, 460, 500),
+          padding: responsive(20, 28, 32),
+        }
+      ]}>
+        <Text style={[styles.title, { fontSize: fs(responsive(22, 26, 28)) }]}>Become a Donor</Text>
+        <Text style={[styles.subtitle, { fontSize: fs(responsive(14, 15, 16)) }]}>Step {step} of 3</Text>
         
         {/* Step Indicator */}
         <View style={styles.stepIndicator}>
@@ -200,9 +212,9 @@ export default function Register() {
                     value={formData.location_id}
                     onChange={(e) => setFormData({...formData, location_id: parseInt(e.target.value)})}
                   >
-                    <option value={0} disabled style={{ backgroundColor: 'red' }}>Select a location</option>
+                    <option value={0} disabled style={{ backgroundColor: Colors.surfaceElevated, color: Colors.text }}>Select a location</option>
                     {locations.map(loc => (
-                      <option key={loc.location_id} value={loc.location_id} style={{ backgroundColor: 'red' }}>
+                      <option key={loc.location_id} value={loc.location_id} style={{ backgroundColor: Colors.surfaceElevated, color: Colors.text }}>
                         {loc.district} - {loc.city}
                       </option>
                     ))}
@@ -213,9 +225,9 @@ export default function Register() {
               </View>
             )}
 
-            <View style={styles.buttonRow}>
-              <Button title="Back" onPress={() => setStep(1)} variant="outline" style={{ flex: 1 }} />
-              <Button title="Next Step" onPress={handleNext} style={{ flex: 1 }} />
+            <View style={[styles.buttonRow, { flexDirection: isMobile ? 'column' : 'row' }]}>
+              <Button title="Back" onPress={() => setStep(1)} variant="outline" style={{ flex: isMobile ? undefined : 1 }} />
+              <Button title="Next Step" onPress={handleNext} style={{ flex: isMobile ? undefined : 1 }} />
             </View>
           </View>
         )}
@@ -237,9 +249,9 @@ export default function Register() {
               secureTextEntry
             />
             
-            <View style={styles.buttonRow}>
-              <Button title="Back" onPress={() => setStep(2)} variant="outline" style={{ flex: 1 }} />
-              <Button title="Register" onPress={handleRegister} isLoading={isLoading} style={{ flex: 1 }} />
+            <View style={[styles.buttonRow, { flexDirection: isMobile ? 'column' : 'row' }]}>
+              <Button title="Back" onPress={() => setStep(2)} variant="outline" style={{ flex: isMobile ? undefined : 1 }} />
+              <Button title="Register" onPress={handleRegister} isLoading={isLoading} style={{ flex: isMobile ? undefined : 1 }} />
             </View>
           </View>
         )}
@@ -263,21 +275,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     alignItems: 'center',
-    padding: 20,
-    paddingTop: 40,
+    padding: 16,
+    paddingTop: 32,
     paddingBottom: 60,
   },
   card: {
     width: '100%',
-    maxWidth: 500,
     backgroundColor: Colors.surface,
-    padding: 32,
     borderRadius: 16,
     borderWidth: 1,
     borderColor: Colors.border,
   },
   title: {
-    fontSize: 28,
     fontFamily: Fonts.bold,
     fontWeight: '700',
     color: Colors.text,
@@ -285,7 +294,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
     fontFamily: Fonts.regular,
     color: Colors.textSecondary,
     marginBottom: 24,
@@ -319,8 +327,8 @@ const styles = StyleSheet.create({
   bloodTypeGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    justifyContent: 'space-between',
+    gap: 10,
+    justifyContent: 'center',
   },
   pickerContainer: {
     backgroundColor: Colors.surfaceElevated,
@@ -340,8 +348,7 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   buttonRow: {
-    flexDirection: 'row',
-    gap: 16,
+    gap: 12,
     marginTop: 24,
   },
   errorMsg: {
@@ -358,6 +365,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     marginTop: 32,
+    flexWrap: 'wrap',
   },
   footerText: {
     color: Colors.textSecondary,

@@ -7,9 +7,10 @@ import { MapPin, Phone, Calendar } from 'lucide-react-native';
 interface DonorCardProps {
   donor: Donor;
   showContact?: boolean;
+  onToggleBlock?: () => void;
 }
 
-export function DonorCard({ donor, showContact = false }: DonorCardProps) {
+export function DonorCard({ donor, showContact = false, onToggleBlock }: DonorCardProps) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
@@ -27,8 +28,26 @@ export function DonorCard({ donor, showContact = false }: DonorCardProps) {
             </Text>
           </View>
         </View>
-        <View style={styles.bloodTypeBadge}>
-          <Text style={styles.bloodTypeText}>{donor.blood_type?.blood_group}</Text>
+        <View style={styles.rightActions}>
+          {onToggleBlock && (
+            <TouchableOpacity 
+              onPress={onToggleBlock}
+              style={[
+                styles.blockBadge, 
+                { backgroundColor: (donor as any).is_blocked ? Colors.success + '20' : Colors.danger + '20' }
+              ]}
+            >
+              <Text style={[
+                styles.statusText,
+                { color: (donor as any).is_blocked ? Colors.success : Colors.danger }
+              ]}>
+                {(donor as any).is_blocked ? 'Unblock' : 'Block'}
+              </Text>
+            </TouchableOpacity>
+          )}
+          <View style={styles.bloodTypeBadge}>
+            <Text style={styles.bloodTypeText}>{donor.blood_type?.blood_group}</Text>
+          </View>
         </View>
       </View>
 
@@ -97,6 +116,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: Fonts.bold,
     fontWeight: '600',
+  },
+  rightActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  blockBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   bloodTypeBadge: {
     backgroundColor: Colors.primary,
